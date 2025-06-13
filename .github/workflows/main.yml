@@ -1,47 +1,51 @@
 name: 'Lint Code'
+
 on:
   push:
-    branches: [master, main]
+    branches: [main] # It's common to only run on the main branch for pushes
   pull_request:
-    branches: [master, main]
+    branches: [main] # And on pull requests targeting main
+
 jobs:
   lint_python:
     name: Lint Python Files
     runs-on: ubuntu-latest
+
     steps:
     - name: Checkout Repository
-      uses: actions/checkout@v3
-    
+      uses: actions/checkout@v4 # Use the latest major version
+
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5 # Use the latest major version
       with:
-        python-version: 3.12
+        python-version: '3.12'
+        cache: 'pip' # Cache dependencies for faster subsequent runs
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install flake8
-    - name: Print working directory
-      run: pwd
-    - name: Run Linter
-      run: |
-        pwd
-        # This command finds all Python files recursively and runs flake8 on them
-        find . -name "*.py" -exec flake8 {} +
-        echo "Linted all the python files successfully"
+
+    - name: Run Python Linter
+      # Flake8 will automatically find all .py files in the repository
+      # --count will show a total count of errors, failing the build if any are found
+      run: flake8 . --count --show-source --statistics
+
   lint_js:
       name: Lint JavaScript Files
       runs-on: ubuntu-latest
+
       steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
-      - name: Install Node.js
-        uses: actions/setup-node@v3
+        uses: actions/checkout@v4 # Use the latest major version
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4 # Use the latest major version
         with:
-          node-version: 14
-      - name: Install JSHint
-        run: npm install jshint --global
-      - name: Run Linter
-        run: |
-          # This command finds all JavaScript files recursively and runs JSHint on them
-          find ./server/database -name "*.js" -exec jshint {} +
-          echo "Linted all the js files successfully"
+          node-version: '20' # Use a current Long-Term Support (LTS) version
+          cache: 'npm' # Cache dependencies
+
+      - name: Run JavaScript Linter
+        # Use npx to run jshint without a global install.
+        # This command lints all .js files within the specified directory.
+        run: npx jshint ./server/database
